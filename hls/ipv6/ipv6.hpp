@@ -1,0 +1,84 @@
+// Anonymous contribution
+#pragma once
+
+#include "../axi_utils.hpp"
+#include "../packet.hpp"
+#include "../fns_config.hpp"
+
+const uint32_t IPV6_HEADER_SIZE = 320;
+
+struct ipv6Meta
+{
+	ap_uint<128> their_address;
+	ap_uint<16> length;
+	ap_uint<8>  next_header;
+	ipv6Meta() {}
+	ipv6Meta(ap_uint<128> addr, ap_uint<16> len, ap_uint<8> next)
+		:their_address(addr), length(len), next_header(next) {}
+};
+
+
+/**
+ * version = w(3,0);
+ * traffic_class = w(11,4);
+ * flow_label = w(31,12);
+ * payload_length = w(47,32);
+ * next_header = w(55,48);
+ * hop_limits = w(63,56);
+ * src_address = w(191,64);
+ * dst_address(63, 0) = w(255,192);
+ */
+template <int W>
+class ipv6Header : public packetHeader<W, IPV6_HEADER_SIZE> {
+	using packetHeader<W, IPV6_HEADER_SIZE>::header;
+
+public:
+	ipv6Header()
+	{
+		header(7, 4)  = 6;
+		header(55,48) = 0x11;
+		header(63,56) = 0xFF; //hop limit
+	}
+	void setPayloadLen(ap_uint<16> len)
+	{
+		header(47,32) = reverse(len);
+	}
+	ap_uint<16> getPayloadLen()
+	{
+		return reverse((ap_uint<16>)header(47,32));
+	}
+	void setSrcAddress(const ap_uint<128> address)
+	{
+		header(191,64)= address;
+	}
+	ap_uint<128> getSrcAddress()
+	{
+		return header(191,64);
+	}
+	void setDstAddress(ap_uint<128> address)
+	{
+		header(319,192) = address;
+	}
+	ap_uint<128> getDstAddress()
+	{
+		return header(319,192);
+	}
+	void setNextHeader(ap_uint<8> next)
+	{
+		header(55,48) = next;
+	}
+	ap_uint<8> getNextHeader()
+	{
+		return header(55,48);
+	}
+};
+
+
+template <int WIDTH>
+void ipv6_core(	stream<net_axis<WIDTH> >&	s_axis_rx_data,
+			stream<ipv6Meta>&	m_axis_rx_meta,
+			stream<net_axis<WIDTH> >&	m_axis_rx_data,
+			stream<ipv6Meta>&	s_axis_tx_meta,
+			stream<net_axis<WIDTH> >&	s_axis_tx_data,
+			stream<net_axis<WIDTH> >&	m_axis_tx_data,
+			ap_uint<128>		reg_ip_address);

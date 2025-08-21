@@ -1,0 +1,31 @@
+# Author: // Anonymous contributor (// Anonymous contributor)
+
+cmake_minimum_required(VERSION 3.0)
+
+project(iperf_udp
+        VERSION 0.9)
+
+# Target options
+set(FNS_PLATFORM_PART "xcu55c-fsvh2892-2L-e" CACHE STRING "FPGA platform part")
+
+# Domain options
+set(FNS_DATA_WIDTH 8 CACHE STRING "Width of data path in bytes")
+
+# Find Vitis
+find_package(Vitis REQUIRED)
+
+add_vitis_ip(${PROJECT_NAME}
+                 FILES
+                    "../axi_utils.cpp"
+                    "iperf_udp.cpp"
+                    "iperf_udp.hpp"
+                 TB_FILES
+                    "test_iperf_udp.cpp"
+                 HLS_FLAGS
+                    "-DFNS_DATA_WIDTH=${FNS_DATA_WIDTH}"
+                    "-DFNS_ROCE_STACK_MAX_QPS=${FNS_ROCE_STACK_MAX_QPS}"
+                 PLATFORM_PART ${FNS_PLATFORM_PART}
+                 VENDOR "ethz.systems.fpga"
+                 DISPLAY_NAME "iperf udp"
+                 DESCRIPTION ""
+                 VERSION ${PROJECT_VERSION})
